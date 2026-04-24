@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Inference Visualization - exp-w5cmp-w5_r280_f8-seed7-20260423_030902/lora</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic Pro", "Yu Gothic", "Meiryo", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      padding: 20px;
+    }
+    .header {
+      background: #fff;
+      padding: 16px 24px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .header h1 { font-size: 20px; margin-bottom: 4px; }
+    .header .meta { font-size: 13px; color: #888; }
+    .sample {
+      background: #fff;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .sample-header {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 4px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .sample-meta {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .col { min-width: 0; }
+    .video-col video {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 4px;
+      background: #000;
+    }
+    h3 { font-size: 14px; margin-bottom: 8px; }
+    .gt-label { color: #1a5f2a; }
+    .pred-label { color: #1a3a5f; }
+    .caption {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 10px;
+      border-radius: 4px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .gt { background: #f0f8f0; border: 1px solid #c8e6c8; }
+    .pred { background: #f0f4f8; border: 1px solid #c8d8e8; }
+    .error { color: #c00; font-style: italic; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="header">
+    <h1>Inference Visualization - exp-w5cmp-w5_r280_f8-seed7-20260423_030902/lora</h1>
+    <div class="meta">2026-04-24 00:52:40 | 8 samples | <a href="predictions.json">predictions.json</a></div>
+  </div>
+  <div id="content">Loading...</div>
+  <script>
+    fetch('predictions.json')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('content');
+        container.innerHTML = '';
+        data.results.forEach((r, i) => {
+          const isPredError = r.pred_text.startsWith('[ERROR');
+          const hasWindow = (r.chunk_start != null && r.chunk_end != null);
+          const metaLine = hasWindow
+            ? `${r.annot_name} | window: ${r.chunk_start.toFixed(2)}–${r.chunk_end.toFixed(2)}s (W=${r.window_duration}s, clipped)`
+            : `${r.annot_name} | full video (duration=${r.window_duration}s)`;
+          const div = document.createElement('div');
+          div.className = 'sample';
+          div.innerHTML = `
+            <div class="sample-header">Sample ${i + 1}</div>
+            <div class="sample-meta">${escapeHtml(metaLine)}</div>
+            <div class="columns">
+              <div class="col video-col">
+                <video controls preload="metadata">
+                  <source src="${r.video_path}" type="video/mp4">
+                  Video not available
+                </video>
+              </div>
+              <div class="col">
+                <h3 class="gt-label">Ground Truth</h3>
+                <pre class="caption gt">${escapeHtml(r.gt_text)}</pre>
+              </div>
+              <div class="col">
+                <h3 class="pred-label">Prediction</h3>
+                <pre class="caption pred ${isPredError ? 'error' : ''}">${escapeHtml(r.pred_text)}</pre>
+              </div>
+            </div>`;
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById('content').textContent = 'Failed to load ' + 'predictions.json' + ': ' + err;
+      });
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
